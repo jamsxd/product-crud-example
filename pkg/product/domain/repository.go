@@ -1,7 +1,10 @@
 package domain
 
+import "context"
+
 type ProductRepository interface {
-	FindBySku(sku string) (*Product, error)
-	Upsert(sku string, product *Product) error
-	Delete(sku string) error
+	FindAll(ctx context.Context) ([]*Product, error)
+	FindBySku(ctx context.Context, sku string) (*Product, error)
+	Upsert(ctx context.Context, product *Product) error
+	Delete(ctx context.Context, sku string) error
 }
