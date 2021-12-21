@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+
+  crud:
+    build: .
+    ports:
+      - '8080:8080'
+    networks:
+      - product
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: always
+    networks:
+      - product
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=123123
+      - MONGO_INITDB_DATABASE=retail
+
+networks:
+  product:
+    driver: bridge
