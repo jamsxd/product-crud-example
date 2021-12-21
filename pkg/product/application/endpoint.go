@@ -2,6 +2,9 @@ package application
 
 import (
 	"context"
+	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/jamsxd/product-crud-example/pkg/product/domain"
@@ -63,7 +66,70 @@ type UpsertProductRequest struct {
 }
 
 type UpsertProductResponse struct {
-	Err error `json:"err,omitempty"`
+	Err     error                  `json:"-"`
+	Details map[string]interface{} `json:"details,omitempty"`
+}
+
+func (r UpsertProductRequest) Validate() map[string]interface{} {
+	errs := make(map[string]interface{})
+	if r.Product == nil {
+
+		errs["product"] = "product is required"
+		return errs
+	}
+
+	//Validate sku
+	if r.Product.Sku == "" {
+		errs["sku"] = "sku is required"
+	}
+	if len(strings.Split(r.Product.Sku, "-")) != 2 || len(strings.Split(r.Product.Sku, "-")[1]) < 7 || len(strings.Split(r.Product.Sku, "-")[1]) > 8 {
+		errs["sku"] = "sku must be in format: AAA-1234567"
+	}
+
+	//Validate name
+	if r.Product.Name == "" {
+		errs["name"] = "name is required"
+	}
+	if len(r.Product.Name) < 3 || len(r.Product.Name) > 50 {
+		errs["name"] = "name must be between 3 and 50 characters"
+	}
+
+	//Validate brand
+	if r.Product.Brand == "" {
+		errs["brand"] = "brand is required"
+	}
+	if len(r.Product.Brand) < 3 || len(r.Product.Brand) > 50 {
+		errs["brand"] = "brand must be between 3 and 50 characters"
+	}
+
+	//Validate size
+	if r.Product.Size != nil && *r.Product.Size == "" {
+		errs["size"] = "size cannot be empty"
+	}
+
+	//Validate price
+	if r.Product.Price <= 1.00 || r.Product.Price >= 99999999.00 {
+		errs["price"] = "price must be between 1.00 and 99999999.00"
+	}
+
+	//Validate principal_image
+	if r.Product.PrincipalImage == "" {
+		errs["principalImage"] = "principalImage is required"
+	}
+
+	if _, err := url.ParseRequestURI(r.Product.PrincipalImage); err != nil {
+		errs["principalImage"] = "principalImage is not a valid url"
+	}
+
+	if r.Product.OtherImages != nil && len(r.Product.OtherImages) > 0 {
+		for index, image := range r.Product.OtherImages {
+			if _, err := url.ParseRequestURI(image); err != nil {
+				errs["otherImages["+fmt.Sprint(index)+"]"] = " is not a valid url"
+			}
+		}
+	}
+
+	return errs
 }
 
 func (r UpsertProductResponse) Failed() error { return r.Err }
@@ -71,6 +137,11 @@ func (r UpsertProductResponse) Failed() error { return r.Err }
 func makeUpsertProductEndpoint(svc domain.ProductService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(UpsertProductRequest)
+		errs := req.Validate()
+		if len(errs) > 0 {
+			return UpsertProductResponse{Details: errs, Err: domain.ErrInvalidProduct}, nil
+		}
+
 		err := svc.UpsertProduct(ctx, req.Product)
 		return UpsertProductResponse{Err: err}, nil
 	}
