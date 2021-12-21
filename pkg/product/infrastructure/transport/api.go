@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/go-kit/log"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jamsxd/product-crud-example/pkg/product/application"
 	"github.com/jamsxd/product-crud-example/pkg/product/domain"
@@ -35,7 +36,7 @@ func NewHttpHandler(endpoints application.ProductEndpoint, logger log.Logger) ht
 		kithttp.NewServer(
 			endpoints.UpsertProduct,
 			decodeUpsertProductRequest,
-			encodeHTTPGenericResponse,
+			encodeUpsertResponse,
 			kithttp.ServerErrorLogger(logger),
 		),
 	)
@@ -47,7 +48,7 @@ func NewHttpHandler(endpoints application.ProductEndpoint, logger log.Logger) ht
 			kithttp.ServerErrorLogger(logger),
 		),
 	)
-	return r
+	return handlers.RecoveryHandler()(r)
 }
 
 func decodeGetAllProductsRequest(_ context.Context, r *http.Request) (interface{}, error) {
@@ -65,6 +66,16 @@ func decodeUpsertProductRequest(_ context.Context, r *http.Request) (interface{}
 		return nil, err
 	}
 	return application.UpsertProductRequest{Product: &product}, nil
+}
+
+func encodeUpsertResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if f, ok := response.(endpoint.Failer); ok && f.Failed() != nil {
+		w.WriteHeader(err2code(f.Failed()))
+		json.NewEncoder(w).Encode(response)
+		return nil
+	}
+	return json.NewEncoder(w).Encode(response)
 }
 
 func decodeDeleteProductRequest(_ context.Context, r *http.Request) (interface{}, error) {
