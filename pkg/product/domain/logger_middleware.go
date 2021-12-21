@@ -20,7 +20,7 @@ func newLoggingMiddleware(logger log.Logger) Middleware {
 	}
 }
 
-func (mw LoggingMiddleware) GetAllProducts(ctx context.Context) ([]*Product, error) {
+func (mw LoggingMiddleware) GetAllProducts(ctx context.Context) ([]Product, error) {
 	defer func(begin time.Time) {
 		mw.logger.Log(
 			"method", "GetAllProducts",

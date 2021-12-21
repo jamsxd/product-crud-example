@@ -7,7 +7,7 @@ import (
 )
 
 type ProductService interface {
-	GetAllProducts(ctx context.Context) ([]*Product, error)
+	GetAllProducts(ctx context.Context) ([]Product, error)
 	GetProduct(ctx context.Context, sku string) (*Product, error)
 	UpsertProduct(ctx context.Context, product *Product) error
 	DeleteProduct(ctx context.Context, sku string) error
@@ -21,7 +21,7 @@ func NewProductService(repo ProductRepository, logger log.Logger) ProductService
 	return newLoggingMiddleware(logger)(&basicProductService{repo})
 }
 
-func (s *basicProductService) GetAllProducts(ctx context.Context) ([]*Product, error) {
+func (s *basicProductService) GetAllProducts(ctx context.Context) ([]Product, error) {
 	return s.repo.FindAll(ctx)
 }
 

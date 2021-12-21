@@ -5,7 +5,7 @@ type Product struct {
 	Name           string   `json:"name"`
 	Brand          string   `json:"brand"`
 	Size           string   `json:"size"`
-	Price          int64    `json:"price"`
+	Price          float64  `json:"price"`
 	PrincipalImage string   `json:"principal_image"`
 	OtherImages    []string `json:"other_images"`
 }
