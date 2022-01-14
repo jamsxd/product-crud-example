@@ -78,6 +78,11 @@ func (r UpsertProductRequest) Validate() map[string]interface{} {
 		return errs
 	}
 
+	r.Product.Sku = strings.TrimSpace(r.Product.Sku)
+	r.Product.Name = strings.TrimSpace(r.Product.Name)
+	r.Product.Brand = strings.TrimSpace(r.Product.Brand)
+	r.Product.PrincipalImage = strings.TrimSpace(r.Product.PrincipalImage)
+
 	//Validate sku
 	if r.Product.Sku == "" {
 		errs["sku"] = "sku is required"
