@@ -75,6 +75,22 @@ func TestHttpTransport(t *testing.T) {
 			assert.NotNil(t, res)
 			assert.Equal(t, http.StatusOK, res.StatusCode)
 		})
+		t.Run("Should return bad request response", func(t *testing.T) {
+			mockEndpoint.On("UpsertProduct", mock.Anything, application.UpsertProductRequest{
+				Product: &domain.Product{
+					Sku:   "FAL-123123",
+					Name:  "FAL-123123",
+					Brand: "FAL-123123",
+					Price: 123.123,
+				},
+			}).Return(&application.UpsertProductResponse{Err: domain.ErrInvalidProduct}, nil).Once()
+			body := `{"sku":"FAL-123123","name":"FAL-123123","brand":"FAL-123123","price":123.123}`
+			req, _ := http.NewRequest("PUT", srv.URL+"/products", strings.NewReader(body))
+			res, err := http.DefaultClient.Do(req)
+			assert.NoError(t, err)
+			assert.NotNil(t, res)
+			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		})
 	})
 
 	t.Run("DeleteProduct", func(t *testing.T) {
